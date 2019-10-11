@@ -103,6 +103,7 @@ typedef struct init_data {
     double shear_to_s;      //!< value of specific shear viscosity
     //CFM EDIT: Adding customizable bulk viscosity
     int bulk_visc_param_default1;
+    //END CFM EDIT
   
     //! flag to include temperature dependent eta/s(T)
     int T_dependent_shear_to_s;

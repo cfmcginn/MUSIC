@@ -56,8 +56,10 @@ class Diss {
                          DmuMuBoverTVec &baryon_diffusion_vec);
 
     double get_temperature_dependent_eta_s(double T);
+    //CFM EDIT: Add zetaParamID for customizable bulk from music_inputs*
     double get_temperature_dependent_zeta_s(double temperature, int zetaParamID);
-
+    //END CFM EDIT
+    
     void output_kappa_T_and_muB_dependence();
     void output_kappa_along_const_sovernB();
     void output_eta_over_s_T_and_muB_dependence();

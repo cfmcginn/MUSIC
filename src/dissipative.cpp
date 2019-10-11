@@ -761,7 +761,7 @@ double Diss::Make_uPiSource(double tau, Cell_small *grid_pt, Cell_small *grid_pt
     double pressure = eos.get_pressure(epsilon, rhob);
 
     // T dependent bulk viscosity from Gabriel
-    //CFM EDIT
+    //CFM EDIT: Feed new bulk flag to get_bulk function
     bulk = get_temperature_dependent_zeta_s(temperature, DATA.bulk_visc_param_default1);
     //END CFM EDIT
     bulk = bulk*(epsilon + pressure)/temperature;
@@ -1059,7 +1059,7 @@ double Diss::get_temperature_dependent_eta_s(double T) {
     return(shear_to_s);
 }
 
-//CFM EDIT
+//CFM EDIT: Mod here for bulk viscosity customization - currently just narrow (1, default) and wide (2)
 double Diss::get_temperature_dependent_zeta_s(double temperature, int zetaParamID) {
 
   double bulk = -100; // Some insane default to throw a bug but should never propagate based on below
