@@ -312,11 +312,17 @@ void Cell_info::OutputEvolution_Knudsen_Reynoldsnumbers(SCGrid &arena,
             for (int ix = 0; ix < arena.nX(); ix += n_skip_x) {
                 double R_pi = 0.0;
                 double R_Pi = 0.0;
+		//CFM EDIT: Adding press and P_eff for pi/p output
+		double press = 0.0;
+		double P_eff = 0.0;
                 calculate_inverse_Reynolds_numbers(arena, ieta, ix, iy,
-                                                   R_pi, R_Pi);
+                                                   R_pi, R_Pi, press, P_eff);
+		//END CFM EDIT
 
                 if (DATA.outputBinaryEvolution == 0) {
-                    fprintf(out_file_xyeta, "%e %e\n", R_pi, R_Pi);
+		  //CFM EDIT: Added press and P_eff to output
+		  fprintf(out_file_xyeta, "%e %e %e %e\n", R_pi, R_Pi, press, P_eff);
+		  //END CFM EDIT
                 } else {
                     float array[] = {static_cast<float>(R_pi),
                                      static_cast<float>(R_Pi)};
@@ -328,11 +334,11 @@ void Cell_info::OutputEvolution_Knudsen_Reynoldsnumbers(SCGrid &arena,
     fclose(out_file_xyeta);
 }
 
-
+//CFM EDIT: Adding press and P_eff to args
 void Cell_info::calculate_inverse_Reynolds_numbers(
                                 SCGrid &arena_current,
                                 const int ieta, const int ix, const int iy,
-                                double &R_pi, double &R_Pi) const {
+                                double &R_pi, double &R_Pi, double &press, double &P_eff) const {
     const auto grid_pt = arena_current(ix, iy, ieta);
     
     const double e_local  = grid_pt.epsilon;
@@ -357,8 +363,12 @@ void Cell_info::calculate_inverse_Reynolds_numbers(
     
     const double pi_local = grid_pt.pi_b;
 
-    R_pi = sqrt(pisize)/pressure;
-    R_Pi = sqrt(pi_local)/pressure;
+    //CFM EDIT: removing sqrt from rpi calcs and add press and P_eff
+    R_pi = pisize/pressure;
+    R_Pi = pi_local/pressure;
+    press = pressure;
+    P_eff = pressure + pi_local;
+    //END CFM EDIT
 }
 
 

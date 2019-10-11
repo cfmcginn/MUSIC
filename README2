@@ -1,5 +1,8 @@
 2019.10.11
 
+NOTE: Much of this work is based on that by Megan Byres, Megan2815 on github or
+https://github.com/Megan2815
+
 Fork of https://github.com/MUSIC-hydro/MUSIC
 Made on hash '0a29ff0e779bbaf75e5ec9da73bc7c5fbd54ebb6', corresponding to July 4th commit, on stable public branch
  * This hash is chosen as later commits make the documentation invalid (main executable described in author README.md, 'mpihydro' was renamed, make compatability unclear, etc), and rather than try to piece together changes to make and executable names we instead opt to use this snapshot

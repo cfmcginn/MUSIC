@@ -68,10 +68,12 @@ class Cell_info {
 
     //! This function computes the inverse Reynolds number for a given fluid
     //! cell at (ix, iy, ieta)
+    //CFM EDIT: Added press, P_eff for pi/p output
     void calculate_inverse_Reynolds_numbers(
                         SCGrid &arena_current,
                         const int ieta, const int ix, const int iy,
-                        double &R_pi, double &R_Pi) const;
+                        double &R_pi, double &R_Pi, double &press, double &P_eff) const;
+    //END CFM EDIT
     
     void OutputEvolution_Knudsen_Reynoldsnumbers(SCGrid &arena,
                                                  double tau) const;
