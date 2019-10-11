@@ -12,3 +12,9 @@ make -j10
 
 Successful build w/ src/mpihydro executable, run w/ our interface HydroStudy produces plausible physics output - Now mv this BRANCHLOG into repo + a README2 explaining the purpose of the fork + choice to build on old hash
 
+First round of mods:
+ * data.h
+ * read_in_parameters.cpp
+ * dissapative.h, .cpp
+
+All touched for bulk viscosity being customizable from params file, initial customization as narrow (original in master + default here) and wide
