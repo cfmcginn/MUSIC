@@ -1,0 +1,10 @@
+2019.10.11
+
+Fork of https://github.com/MUSIC-hydro/MUSIC
+Made on hash '0a29ff0e779bbaf75e5ec9da73bc7c5fbd54ebb6', corresponding to July 4th commit, on stable public branch
+ * This hash is chosen as later commits make the documentation invalid (main executable described in author README.md, 'mpihydro' was renamed, make compatability unclear, etc), and rather than try to piece together changes to make and executable names we instead opt to use this snapshot
+
+We will be making simple modificationa to the src code such that the bulk viscosity is configurable from the music_input* parameters file, rather than hard-coded
+
+In general, these edits will be preceded by "//CFM EDIT" comment for quick grepping
+Edits will also be clear in a diff of fork to master.
