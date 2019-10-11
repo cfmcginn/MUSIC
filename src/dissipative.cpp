@@ -761,7 +761,9 @@ double Diss::Make_uPiSource(double tau, Cell_small *grid_pt, Cell_small *grid_pt
     double pressure = eos.get_pressure(epsilon, rhob);
 
     // T dependent bulk viscosity from Gabriel
-    bulk = get_temperature_dependent_zeta_s(temperature);
+    //CFM EDIT
+    bulk = get_temperature_dependent_zeta_s(temperature, DATA.bulk_visc_param_default1);
+    //END CFM EDIT
     bulk = bulk*(epsilon + pressure)/temperature;
 
     // defining bulk relaxation time and additional transport coefficients
@@ -1057,7 +1059,27 @@ double Diss::get_temperature_dependent_eta_s(double T) {
     return(shear_to_s);
 }
 
-double Diss::get_temperature_dependent_zeta_s(double temperature) {
+//CFM EDIT
+double Diss::get_temperature_dependent_zeta_s(double temperature, int zetaParamID) {
+
+  double bulk = -100; // Some insane default to throw a bug but should never propagate based on below
+  if(zetaParamID == 2){
+    // Wide parameterization from paper, param id 2
+    double Tpeak = 0.165/0.1973;
+    double Bnorm = 0.24;
+    double Twidth = 0.01/0.1973;
+    double Bwidth = 1.5;
+    
+    double Ttilde = (temperature/Tpeak - 1.)/Bwidth;
+    bulk = Bnorm/(Ttilde*Ttilde + 1.);
+    if (temperature < Tpeak){
+      double Tdiff = (temperature - Tpeak)/Twidth;
+      bulk = Bnorm*exp(-Tdiff*Tdiff);
+    }
+  }
+  else{
+    if(zetaParamID != 1) music_message.info("WARNING: Given Bulk Viscosity Param. \'" + std::to_string(zetaParamID) + "\' is not recognized. Defaulting to '1' or 'narrow'");
+
     // T dependent bulk viscosity from Gabriel
     /////////////////////////////////////////////
     //           Parametrization 1             //
@@ -1067,17 +1089,19 @@ double Diss::get_temperature_dependent_zeta_s(double temperature) {
     double A1=-13.77, A2=27.55, A3=13.45;
     double lambda1=0.9, lambda2=0.25, lambda3=0.9, lambda4=0.22;
     double sigma1=0.025, sigma2=0.13, sigma3=0.0025, sigma4=0.022;
- 
-    double bulk = A1*dummy*dummy + A2*dummy - A3;
+    
+    bulk = A1*dummy*dummy + A2*dummy - A3;
     if (temperature < 0.995*Ttr) {
-        bulk = (lambda3*exp((dummy-1)/sigma3)
-                + lambda4*exp((dummy-1)/sigma4) + 0.03);
+      bulk = (lambda3*exp((dummy-1)/sigma3)
+	      + lambda4*exp((dummy-1)/sigma4) + 0.03);
     }
     if (temperature > 1.05*Ttr) {
-        bulk = (lambda1*exp(-(dummy-1)/sigma1)
-                + lambda2*exp(-(dummy-1)/sigma2) + 0.001);
+      bulk = (lambda1*exp(-(dummy-1)/sigma1)
+	      + lambda2*exp(-(dummy-1)/sigma2) + 0.001);
     }
-
+  }
+  //END CFM EDIT
+  
     /////////////////////////////////////////////
     //           Parametrization 2             //
     /////////////////////////////////////////////

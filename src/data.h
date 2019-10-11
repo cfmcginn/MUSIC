@@ -101,7 +101,9 @@ typedef struct init_data {
     int turn_on_bulk;       //!< flag to include bulk viscosity
     int turn_on_diff;       //!< flag to include net baryon diffusion
     double shear_to_s;      //!< value of specific shear viscosity
-
+    //CFM EDIT: Adding customizable bulk viscosity
+    int bulk_visc_param_default1;
+  
     //! flag to include temperature dependent eta/s(T)
     int T_dependent_shear_to_s;
 

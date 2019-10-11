@@ -545,6 +545,13 @@ InitData read_in_parameters(std::string input_file) {
     }
     parameter_list.shear_to_s = tempshear_to_s;
 
+    //CFM EDIT:    //Bulk_visc_param_default1
+    int tempbulk_visc_param_default1 = 1; //1 corresponds to parametrization 1 or 'narrow'. 2 would correspond to 'wide'    
+    tempinput = Util::StringFind4(input_file, "Bulk_Visc_Param_Default1");
+    if (tempinput != "empty") istringstream(tempinput) >> tempbulk_visc_param_default1;
+    parameter_list.bulk_visc_param_default1 = tempbulk_visc_param_default1;
+    //END CFM EDIT
+    
     // Include_Bulk_Visc_Yes_1_No_0
     int tempturn_on_bulk = 0;
     tempinput = Util::StringFind4(input_file, "Include_Bulk_Visc_Yes_1_No_0");
