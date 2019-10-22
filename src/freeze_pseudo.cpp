@@ -66,15 +66,23 @@ void Freeze::ReadSpectra_pseudo(InitData* DATA, int full, int verbose) {
         for (int ipt = 0; ipt < iptmax; ipt++) {
             particleList[ip].pt[ipt] = (
                 ptmin + (ptmax - ptmin)*pow(static_cast<double>(ipt), 2.)
-                        /pow(static_cast<double>(iptmax - 1), 2.));
+		/pow(static_cast<double>(iptmax - 1), 2.));
+
         }
         for (int ieta = 0; ieta <= pseudo_steps; ieta++) {
             particleList[ip].y[ieta] = ieta*deltaeta - etamax;
-        }
-    
+	    
+	}
+	
     }
     particleMax = ip + 1;
 
+
+    for (int ieta = 0; ieta <= pseudo_steps; ieta++) {
+      music_message << " " << ieta << "/" << pseudo_steps << ": " << ieta*deltaeta - etamax;
+      music_message.flush("info");
+    }
+    
     fclose(p_file);
 
     FILE *s_file;
@@ -232,9 +240,15 @@ void Freeze::ComputeParticleSpectrum_pseudo_improved(InitData *DATA,
     // store E dN/d^3p as function of phi,
     // pt and eta (pseudorapidity) in sumPtPhi:
     int ieta;
+
+    music_message << "CHECK ETA: ";
+    music_message.flush("info");
     for (ieta = 0; ieta < ietamax; ieta++) {
         double eta = -etamax + ieta*deltaeta;
 
+	music_message << " " << ieta << "/" << ietamax << ": " << eta;
+	music_message.flush("info");
+	
         // Use this variable to store pseudorapidity instead of rapidity
         // May cause confusion in the future,
         // but easier to to share code for both options:
@@ -370,6 +384,7 @@ void Freeze::ComputeParticleSpectrum_pseudo_improved(InitData *DATA,
 
                 for (int ipt = 0; ipt < iptmax; ipt++) {
                     double y = rapidity[ipt];
+
                     if (fabs(y - eta_s) < y_minus_eta_cut) {
                         double pt = pt_array[ipt];
                         double cosh_y_local = cosh_y[ipt];
@@ -379,6 +394,7 @@ void Freeze::ComputeParticleSpectrum_pseudo_improved(InitData *DATA,
                                           - sinh_y_local*sinh_eta_s); 
                         double peta = mt*(sinh_y_local*cosh_eta_s
                                           - cosh_y_local*sinh_eta_s); 
+
                         for (int iphi = 0; iphi < iphimax; iphi++) {
                             double px = pt*cos_phi[iphi];
                             double py = pt*sin_phi[iphi];
@@ -492,7 +508,7 @@ void Freeze::ComputeParticleSpectrum_pseudo_improved(InitData *DATA,
                                 total_deltaf *= f/fabs(total_deltaf);
                             }
                             sum = (f + total_deltaf)*pdSigma;
-                     
+	           
                             if (sum > 10000) {
                                 music_message << "sum>10000 in summation. sum = "
                                      << sum 
@@ -1069,27 +1085,31 @@ void Freeze::compute_thermal_particle_spectra_and_vn(InitData* DATA) {
     // and compute various observables and integrated quantities
     int status = mkdir("./outputs", 0755);
     if (status != 0) {
-        music_message << "Can not create folder ./outputs ...";
+        music_message << "Can not create folder ./outputs ...  FILE,LINE=" << __FILE__ << ", " << __LINE__;
         music_message.flush("warning");
     }
+
     ReadSpectra_pseudo(DATA, 0, 1);
 
     //Make sure the pion, kaon and proton spectra are available
     if (particleMax < 21) {
-        music_message << __func__ 
+      music_message << __func__ 
                       << ": cannot compute pion, kaon and proton observables, "
                       << "some of the spectra are not available.";
         music_message.flush("warning");
     } else {
-        int pid_list [] = {211, -211, 321, -321, 2212, -2212};
+
+      int pid_list [] = {211, -211, 321, -321, 2212, -2212};
         int pid_list_length = sizeof(pid_list)/sizeof(int);
         for (int k = 0; k < pid_list_length; k++) {
             int number = pid_list[k];
             int id = partid[MHALF+number];
             if (id < particleMax) {
-                OutputDifferentialFlowAtMidrapidity(DATA, number, 0);
-                OutputDifferentialFlowNearMidrapidity(DATA, number, 0);
-                OutputIntegratedFlow_vs_y(DATA, number, 0, 0.01, 3.0);
+	      OutputDifferentialFlowAtMidrapidity(DATA, number, 0);
+	      
+	      OutputDifferentialFlowNearMidrapidity(DATA, number, 0);
+   
+	      OutputIntegratedFlow_vs_y(DATA, number, 0, 0.01, 3.0);
             }
         }
     }
@@ -1100,7 +1120,7 @@ void Freeze::compute_final_particle_spectra_and_vn(InitData* DATA) {
     // compute various observables and integrated quantities
     int status = mkdir("./outputs", 0755);   // output results folder
     if (status != 0) {
-        music_message << "Can not create folder ./outputs ...";
+        music_message << "Can not create folder ./outputs ...  FILE,LINE=" << __FILE__ << ", " << __LINE__;
         music_message.flush("warning");
     }
     ReadSpectra_pseudo(DATA, 1, 1);  // read in particle spectra information
@@ -1211,7 +1231,7 @@ void Freeze::rapidity_integrated_flow(
     int neta = particleList[j].ny;
     double intvn[ptsize][nharmonics][2] = {};
     double m = particleList[j].mass;
-   
+    
     double testmin;
     if (yflag) {
         if (DATA->pseudofreeze == 1)
@@ -1234,6 +1254,7 @@ void Freeze::rapidity_integrated_flow(
         music_message.flush("error");
         exit(1);
     }
+
     double testmax;
     if (yflag) {
         if (DATA->pseudofreeze == 1)
@@ -1258,7 +1279,8 @@ void Freeze::rapidity_integrated_flow(
         music_message.flush("error");
         exit(1);
     }
-   
+
+
     // loop over pt
     for (int ipt = 0; ipt < npt; ipt++) {
         double pt = particleList[j].pt[ipt];
@@ -1267,7 +1289,7 @@ void Freeze::rapidity_integrated_flow(
         for (int iphi = 0; iphi < nphi; iphi++) {
             double ylist[etasize] = {0};
             double etalist[etasize] = {0};
-           
+	    
             // Integrate over pseudorapidity using gsl
             double dndpt[etasize] = {0};
             for (int ieta = 0; ieta < neta; ieta++) {
@@ -1279,6 +1301,7 @@ void Freeze::rapidity_integrated_flow(
                      etalist[ieta] = eta_local;
                      y_local = Rap(eta_local, pt, m);   // get rapidity
                      ylist[ieta] = y_local;   // get rapidity
+		     
                 } else {
                      y_local = rap_local;
                      ylist[ieta] = y_local;
@@ -1297,16 +1320,22 @@ void Freeze::rapidity_integrated_flow(
                              *particleList[j].dNdydptdphi[ieta][ipt][iphi]);
                 }
             }
-            gsl_interp_accel *acc = gsl_interp_accel_alloc ();
+
+	    gsl_interp_accel *acc = gsl_interp_accel_alloc ();
             gsl_spline *spline = gsl_spline_alloc (gsl_interp_linear, neta);
+
             if (yflag) {
                 // rapidity
-                gsl_spline_init (spline, ylist, dndpt , neta);
+	      
+	      gsl_spline_init (spline, ylist, dndpt , neta);
+
+
             } else {
                 // pseudo-rapidity
-                gsl_spline_init (spline, etalist, dndpt , neta);
+	      gsl_spline_init (spline, etalist, dndpt , neta);
+
             }
-   
+	    
             double dNdp;
             if (minrap < maxrap) {
                 // integrated from minrap to maxrap
@@ -1324,17 +1353,18 @@ void Freeze::rapidity_integrated_flow(
             gsl_spline_free (spline);
             gsl_interp_accel_free (acc);
         }  // phi loop
-   
+
         for (int k = 0; k < 2; k++) {
              vn[0][k][ipt] = intvn[ipt][0][k];
         }
-        
+
         for (int i = 1; i < nharmonics; i++) {
              for(int k = 0; k < 2; k++) {
                  vn[i][k][ipt] = intvn[ipt][i][k]/intvn[ipt][0][0];
              }
         }
     }  // pt loop
+
 }
 
 
@@ -1348,7 +1378,7 @@ void Freeze::pt_and_rapidity_integrated_flow(InitData *DATA, int number,
         double vn[nharmonics][2]) {
     int j = partid[MHALF+number];
     int npt = particleList[j].npt;  
-    
+
     if (minpt < particleList[j].pt[0]) {
         music_message << "Error: called out of range pt in "
              << "pt_and_rapidity_integrated_flow, " 
@@ -1369,7 +1399,7 @@ void Freeze::pt_and_rapidity_integrated_flow(InitData *DATA, int number,
         music_message.flush("error");
         exit(1);
     }
-  
+
     // do rapidity-integral first
     double vnpt[nharmonics][2][etasize] = {};
     rapidity_integrated_flow(DATA, number, yflag,  minrap, maxrap, vnpt);
@@ -1389,6 +1419,7 @@ void Freeze::pt_and_rapidity_integrated_flow(InitData *DATA, int number,
             vncos[ipt] = vnpt[n][0][ipt]*weight;
             vnsin[ipt] = vnpt[n][1][ipt]*weight;
         }
+
         gsl_interp_accel *cosacc = gsl_interp_accel_alloc ();
         gsl_spline *cosspline = gsl_spline_alloc (gsl_interp_linear, npt);
         gsl_spline_init (cosspline, particleList[j].pt ,vncos , npt);
@@ -1410,7 +1441,7 @@ void Freeze::pt_and_rapidity_integrated_flow(InitData *DATA, int number,
                 vn[n][i] /= vn[0][0];
             }
         }
-    
+
         // clean up
         gsl_spline_free (cosspline);
         gsl_interp_accel_free (cosacc);
@@ -1429,7 +1460,7 @@ void Freeze::OutputDifferentialFlowAtMidrapidity(
 
     music_message << "Calculating flow at midrapidity for particle " << number;
     music_message.flush("info");
-
+    
     //Set output file name
     string fname;
     stringstream tmpStr;
@@ -1440,7 +1471,7 @@ void Freeze::OutputDifferentialFlowAtMidrapidity(
     tmpStr << number;
     fname += tmpStr.str();
     fname += ".dat";  
-    
+
     string fname2;
     stringstream tmpStr2;
     fname2 = "./outputs/";
@@ -1450,14 +1481,14 @@ void Freeze::OutputDifferentialFlowAtMidrapidity(
     tmpStr2 << number;
     fname2 += tmpStr.str();
     fname2 += ".dat"; 
-    
+
     // Open output file for vn
     ofstream outfilevn;
     outfilevn.open(fname.c_str());
     
     ofstream outfilevn2;
     outfilevn2.open(fname2.c_str());
-    
+
     outfilevn << "#pt  dN/ptdYdptdphi  v1cos  v1sin  v2cos  v2sin  "
               << "v3cos  v3sin  v4cos  v4sin  v5cos  v5sin  v6cos  v6sin  "
               << "v7cos  v7sin" << endl;
@@ -1472,6 +1503,7 @@ void Freeze::OutputDifferentialFlowAtMidrapidity(
     // Loop over pT
     for (int ipt = 0; ipt < npt; ipt++) {
         double pt=particleList[j].pt[ipt];
+
         pt_and_rapidity_integrated_flow(DATA, number, pt, pt, 1,
                                         eta, eta, vn);  // in rapidity
 
@@ -1482,15 +1514,17 @@ void Freeze::OutputDifferentialFlowAtMidrapidity(
             for (int k =0;k<2;k++) 
                 outfilevn << "  " << vn[i][k];
         outfilevn << endl;
- 
+
         pt_and_rapidity_integrated_flow(DATA, number, pt, pt, 0,
                                         eta, eta, vn);  // pseudo-rapidity 
-        outfilevn2 << pt;
+
+	outfilevn2 << pt;
         outfilevn2 << "  " << vn[0][0]/pt/(2*M_PI);
         for (int i = 1;i<nharmonics;i++) 
             for (int k =0;k<2;k++) 
                 outfilevn2 << "  " << vn[i][k];
         outfilevn2 << endl;
+
     }
     
     // Close file

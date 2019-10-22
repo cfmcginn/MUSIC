@@ -1178,8 +1178,10 @@ int Evolve::FindFreezeOutSurface_boostinvariant_Cornelius(
         double epsFO = epsFO_list[i_freezesurf]/hbarc;
 
         std::stringstream strs_name;
-        strs_name << "surface_eps_" << std::setprecision(4) << epsFO*hbarc
+	//CFM EDIT: Added BOOSTINVARCORNELIUS For clarity to file name
+        strs_name << "surface_eps_BOOSTINVAROCORNELIUS_" << std::setprecision(4) << epsFO*hbarc
                   << ".dat";
+	//END CFM EDIT
 
         std::ofstream s_file;
         if (surface_in_binary) {
