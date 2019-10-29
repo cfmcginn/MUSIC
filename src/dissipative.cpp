@@ -1077,6 +1077,9 @@ double Diss::get_temperature_dependent_zeta_s(double temperature, int zetaParamI
       bulk = Bnorm*exp(-Tdiff*Tdiff);
     }
   }
+  else if(zetaParamID == 3){//We are adding constant 0.01 zeta/s value for comp. to sonic
+    bulk = 0.01;
+  }
   else{
     if(zetaParamID != 1) music_message.info("WARNING: Given Bulk Viscosity Param. \'" + std::to_string(zetaParamID) + "\' is not recognized. Defaulting to '1' or 'narrow'");
 
