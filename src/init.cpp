@@ -136,6 +136,29 @@ void Init::InitArena(SCGrid &arena_prev, SCGrid &arena_current,
         music_message << "dx = " << DATA.delta_x << ", dy = " << DATA.delta_y
                       << ", deta = " << DATA.delta_eta;
         music_message.flush("info");
+    } else if (DATA.Initial_profile == 111) {
+        // added by M. Byres 3/2/2020
+        music_message.info(DATA.initName);
+        ifstream profile(DATA.initName.c_str());
+        std::string dummy;
+        int nx, ny, neta;
+        double deta, dx, dy, dummy2;
+        // read the first line with general info
+        profile >> dummy >> dummy >> dummy2
+                >> dummy >> neta >> dummy >> nx >> dummy >> ny
+                >> dummy >> deta >> dummy >> dx >> dummy >> dy;
+        profile.close();
+        music_message << "Using Initial_profile=" << DATA.Initial_profile
+                      << ". Overwriting lattice dimensions:";
+        DATA.nx = nx;
+        DATA.ny = ny;
+        DATA.delta_x = dx;
+        DATA.delta_y = dy;
+
+        music_message << "neta=" << neta << ", nx=" << nx << ", ny=" << ny;
+        music_message << "deta=" << DATA.delta_eta << ", dx=" << DATA.delta_x
+                      << ", dy=" << DATA.delta_y;
+        music_message.flush("info");
     }
 
     // initialize arena
@@ -240,6 +263,13 @@ void Init::InitTJb(SCGrid &arena_prev, SCGrid &arena_current) {
         music_message << "file name used: " << DATA.initName;
         music_message.flush("info");
         initial_UMN_with_rhob(arena_prev, arena_current);
+    } else if (DATA.Initial_profile == 111) {
+        // read in the 3-D profile from file
+        // added by M. Byres 3/2/2020
+        music_message.info(" ----- information on initial distribution -----");
+        music_message << "file name used: " << DATA.initName;
+        music_message.flush("info");
+        initial_3D_fromfile(arena_prev, arena_current);
     }
     music_message.info("initial distribution done.");
 }
@@ -909,6 +939,80 @@ void Init::initial_with_jetscape(int ieta, SCGrid &arena_prev,
         }
     }
 }
+
+void Init::initial_3D_fromfile(SCGrid &arena_prev,
+                               SCGrid &arena_current) {
+    // added by M. Byres 3/2/2020
+    ifstream profile(DATA.initName.c_str());
+
+    std::string dummy;
+    // read the information line
+    std::getline(profile, dummy);
+
+    const int nx = arena_current.nX();
+    const int ny = arena_current.nY();
+    double temp_profile_ed[nx][ny];
+    double temp_profile_utau[nx][ny];
+    double temp_profile_ux[nx][ny];
+    double temp_profile_uy[nx][ny];
+
+    // read the profile (slices for each eta)
+    double density, dummy1, dummy2, dummy3;
+    double ux, uy, utau;
+
+    for (int ieta = 0; ieta < arena_current.nEta(); ieta++){ // start eta loop
+        // initialize these here to avoid need for two xy loops
+        double eta = (DATA.delta_eta)*ieta - (DATA.eta_size)/2.0;
+        double eta_envelop_ed = eta_profile_normalisation(eta);
+        int entropy_flag = DATA.initializeEntropy;
+        for (int ix = 0; ix < nx; ix++) { // start x loop
+            for (int iy = 0; iy < ny; iy++) { // start y loop
+                // expexted format the same as for profile 8
+                profile >> dummy1 >> dummy2 >> dummy3
+                        >> density >> utau >> ux >> uy
+                        >> dummy  >> dummy  >> dummy  >> dummy;
+                temp_profile_ed[ix][iy] = density;
+                temp_profile_ux[ix][iy] = ux;
+                temp_profile_uy[ix][iy] = uy;
+                temp_profile_utau[ix][iy] = sqrt(1. + ux*ux + uy*uy);
+                if (ix == 0 && iy == 0) {
+                    DATA.x_size = -dummy2*2; 
+                    DATA.y_size = -dummy3*2; 
+                    if (omp_get_thread_num() == 0) { 
+                        music_message << "eta_size=" << DATA.eta_size
+                                      << ", x_size=" << DATA.x_size
+                                      << ", y_size=" << DATA.y_size;
+                        music_message.flush("info");
+                    }
+                }
+                double rhob = 0.0;
+                double epsilon = 0.0;
+                if (entropy_flag == 0) {
+                    epsilon = (temp_profile_ed[ix][iy]*eta_envelop_ed
+                               *DATA.sFactor/hbarc);  // 1/fm^4
+                } else {
+                    double local_sd = (temp_profile_ed[ix][iy]*DATA.sFactor
+                                       *eta_envelop_ed);
+                    epsilon = eos.get_s2e(local_sd, rhob);
+                }
+                if (epsilon < 0.00000000001)
+                    epsilon = 0.00000000001;
+    
+                arena_current(ix, iy, ieta).epsilon = epsilon;
+                arena_current(ix, iy, ieta).rhob = rhob;
+    
+                arena_current(ix, iy, ieta).u[0] = temp_profile_utau[ix][iy];
+                arena_current(ix, iy, ieta).u[1] = temp_profile_ux[ix][iy];
+                arena_current(ix, iy, ieta).u[2] = temp_profile_uy[ix][iy];
+                arena_current(ix, iy, ieta).u[3] = 0.0;
+    
+                arena_prev(ix, iy, ieta) = arena_current(ix, iy, ieta);
+            } // end y loop
+        } // end x loop
+    } // end eta loop
+    profile.close();
+}
+
 
 void Init::clean_up_jetscape_arrays() {
     // clean up
